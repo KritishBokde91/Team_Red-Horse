@@ -377,6 +377,197 @@ async def web_search(request: WebSearchRequest):
         },
     )
 
+# ─── Fact-Check Verification ──────────────────────────────────────────────────
+
+from claim_extractor import extract_claims
+from fact_check_search import multi_tier_search
+from stance_detector import detect_stances_batch
+from verdict_engine import compute_veracity_score, generate_explanation
+from search_scraper import scrape_url
+
+
+class VerifyRequest(BaseModel):
+    claim: str
+    num_results_per_tier: Optional[int] = 5
+
+
+class VerifyResponse(BaseModel):
+    claim: str
+    verdict: str
+    veracity_score: float
+    confidence: float
+    explanation: str
+    sources_summary: Dict[str, int]
+    evidence: List[Dict[str, Any]]
+    atomic_claims: List[Dict[str, Any]]
+
+
+@app.post("/verify")
+async def verify_claim(request: VerifyRequest):
+    """
+    Agentic Fact-Checking Pipeline:
+    1. Extract atomic claims from user input
+    2. Multi-tier search (fact-checkers → international → mainstream)
+    3. Scrape evidence pages
+    4. Stance detection per evidence
+    5. Weighted consensus verdict
+    6. LLM-generated explanation
+
+    Streams SSE progress events, final event contains full verdict JSON.
+    """
+
+    async def pipeline_generator():
+        claim = request.claim.strip()
+        if not claim:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Empty claim'})}\n\n"
+            return
+
+        # ── Stage 1: Claim Extraction ─────────────────────────────────
+        yield f"data: {json.dumps({'type': 'stage', 'stage': 'claim_extraction', 'message': 'Extracting atomic claims...'})}\n\n"
+
+        claims_data = await extract_claims(claim)
+        atomic_claims = claims_data.get("atomic_claims", [])
+        search_queries = [ac["search_query"] for ac in atomic_claims]
+
+        yield f"data: {json.dumps({'type': 'claims_extracted', 'count': len(atomic_claims), 'claim_type': claims_data.get('claim_type', 'unknown'), 'claims': atomic_claims})}\n\n"
+
+        # ── Stage 2: Multi-Tier Search ────────────────────────────────
+        yield f"data: {json.dumps({'type': 'stage', 'stage': 'multi_tier_search', 'message': 'Searching fact-check databases...'})}\n\n"
+
+        all_search_results = []
+        async for event in multi_tier_search(search_queries, request.num_results_per_tier or 5):
+            yield f"data: {json.dumps(event)}\n\n"
+            if event["type"] == "search_done":
+                all_search_results = event.get("results", [])
+
+        if not all_search_results:
+            # No results found at all — return UNVERIFIED
+            verdict_data = {
+                "veracity_score": 0.0,
+                "verdict": "UNVERIFIED",
+                "confidence": 0.0,
+                "sources_summary": {"supports": 0, "refutes": 0, "neutral": 0},
+            }
+            explanation = f"No relevant fact-checking sources were found for the claim: \"{claim}\". The claim remains unverified."
+            final = {
+                "type": "verdict",
+                "claim": claim,
+                "verdict": "UNVERIFIED",
+                "veracity_score": 0.0,
+                "confidence": 0.0,
+                "explanation": explanation,
+                "sources_summary": verdict_data["sources_summary"],
+                "evidence": [],
+                "atomic_claims": atomic_claims,
+            }
+            yield f"data: {json.dumps(final)}\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
+        # ── Stage 3: Scrape Evidence ──────────────────────────────────
+        yield f"data: {json.dumps({'type': 'stage', 'stage': 'scraping', 'message': f'Scraping {len(all_search_results)} evidence pages...'})}\n\n"
+
+        evidence_list = []
+        for i, sr in enumerate(all_search_results):
+            url = sr["url"]
+            yield f"data: {json.dumps({'type': 'scraping_evidence', 'url': url, 'index': i+1, 'total': len(all_search_results)})}\n\n"
+
+            page = await scrape_url(url)
+            if page["success"]:
+                evidence_list.append({
+                    "url": url,
+                    "title": page["title"] or sr.get("title", ""),
+                    "content": page["content"],
+                    "chars": page["chars"],
+                    "tier": sr["tier"],
+                    "tier_name": sr.get("tier_name", ""),
+                    "credibility_weight": sr["credibility_weight"],
+                    "snippet": sr.get("snippet", ""),
+                })
+                yield f"data: {json.dumps({'type': 'evidence_scraped', 'url': url, 'chars': page['chars'], 'tier': sr['tier']})}\n\n"
+            else:
+                yield f"data: {json.dumps({'type': 'evidence_failed', 'url': url})}\n\n"
+
+        if not evidence_list:
+            verdict_data = {
+                "veracity_score": 0.0,
+                "verdict": "UNVERIFIED",
+                "confidence": 0.0,
+                "sources_summary": {"supports": 0, "refutes": 0, "neutral": 0},
+            }
+            explanation = f"Evidence pages could not be scraped for the claim: \"{claim}\". The claim remains unverified."
+            final = {
+                "type": "verdict",
+                "claim": claim,
+                "verdict": "UNVERIFIED",
+                "veracity_score": 0.0,
+                "confidence": 0.0,
+                "explanation": explanation,
+                "sources_summary": verdict_data["sources_summary"],
+                "evidence": [],
+                "atomic_claims": atomic_claims,
+            }
+            yield f"data: {json.dumps(final)}\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
+        # ── Stage 4: Stance Detection ─────────────────────────────────
+        yield f"data: {json.dumps({'type': 'stage', 'stage': 'stance_detection', 'message': f'Analyzing stance of {len(evidence_list)} evidence sources...'})}\n\n"
+
+        enriched_evidence = await detect_stances_batch(claim, evidence_list)
+
+        for ev in enriched_evidence:
+            yield f"data: {json.dumps({'type': 'stance_result', 'url': ev['url'], 'stance': ev['stance'], 'confidence': ev.get('stance_confidence', 0), 'tier': ev['tier']})}\n\n"
+
+        # ── Stage 5: Verdict Computation ──────────────────────────────
+        yield f"data: {json.dumps({'type': 'stage', 'stage': 'verdict', 'message': 'Computing weighted verdict...'})}\n\n"
+
+        verdict_data = compute_veracity_score(enriched_evidence)
+
+        # ── Stage 6: Explanation Generation ───────────────────────────
+        yield f"data: {json.dumps({'type': 'stage', 'stage': 'explanation', 'message': 'Generating explanation...'})}\n\n"
+
+        explanation = await generate_explanation(claim, verdict_data, enriched_evidence)
+
+        # ── Final Verdict ─────────────────────────────────────────────
+        # Clean evidence for response (remove large content field)
+        clean_evidence = []
+        for ev in enriched_evidence:
+            clean_evidence.append({
+                "url": ev.get("url", ""),
+                "title": ev.get("title", ""),
+                "tier": ev.get("tier", 0),
+                "tier_name": ev.get("tier_name", ""),
+                "credibility_weight": ev.get("credibility_weight", 0),
+                "stance": ev.get("stance", "NOT_ENOUGH_INFO"),
+                "stance_confidence": ev.get("stance_confidence", 0),
+                "stance_reasoning": ev.get("stance_reasoning", ""),
+                "key_phrases": ev.get("key_phrases", []),
+            })
+
+        final = {
+            "type": "verdict",
+            "claim": claim,
+            "verdict": verdict_data["verdict"],
+            "veracity_score": verdict_data["veracity_score"],
+            "confidence": verdict_data["confidence"],
+            "explanation": explanation,
+            "sources_summary": verdict_data["sources_summary"],
+            "evidence": clean_evidence,
+            "atomic_claims": atomic_claims,
+        }
+        yield f"data: {json.dumps(final)}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        pipeline_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 

@@ -16,3 +16,4 @@ webdriver-manager
 beautifulsoup4
 curl_cffi
 undetected-chromedriver
+loguru
