@@ -10,6 +10,7 @@ import '../widgets/pipeline_stepper.dart';
 import '../widgets/evidence_list.dart';
 import '../widgets/stance_chart.dart';
 import '../widgets/verdict_card.dart';
+import '../widgets/shield_toggle_card.dart';
 
 /// Main screen of the Credence fact-checker app.
 class VerifyScreen extends StatefulWidget {
@@ -134,6 +135,10 @@ class _VerifyScreenState extends State<VerifyScreen> {
                         onSubmit: _onSubmit,
                         isLoading: state.isRunning,
                       ),
+                      const SizedBox(height: 16),
+
+                      // Shield toggle
+                      const ShieldToggleCard(),
                       const SizedBox(height: 16),
 
                       // Pipeline stepper (shows when running or done)

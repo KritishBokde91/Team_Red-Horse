@@ -377,13 +377,81 @@ async def web_search(request: WebSearchRequest):
         },
     )
 
-# ─── Fact-Check Verification ──────────────────────────────────────────────────
+# ─── Message Classifier (for WhatsApp overlay) ───────────────────────────────
 
-from claim_extractor import extract_claims
+from claim_extractor import extract_claims, _sanitize_llm_json
 from fact_check_search import multi_tier_search
 from stance_detector import detect_stances_batch
 from verdict_engine import compute_veracity_score, generate_explanation
 from search_scraper import scrape_url
+
+CLASSIFY_PROMPT = """You are a message classifier. Determine if the following message is a VERIFIABLE NEWS CLAIM or just a regular message (chat, greeting, spam, job posting, advertisement, meme, etc).
+
+MESSAGE: "{message}"
+
+RULES:
+1. NEWS_CLAIM = A factual assertion about a real-world event that can be verified as true or false (politics, health, disaster, sports result, government policy, etc.)
+2. NOT_NEWS = Greetings, casual chat, jokes, job postings, advertisements, hashtag spam, memes, opinions, personal messages, emojis, stickers
+3. Be STRICT — only classify as NEWS_CLAIM if it contains a specific factual assertion about a real-world event
+
+Respond with ONLY this JSON, nothing else:
+{{"is_news": true/false, "confidence": 0.0-1.0, "reason": "one sentence why"}}"""
+
+
+class ClassifyRequest(BaseModel):
+    message: str
+
+
+@app.post("/classify")
+async def classify_message(request: ClassifyRequest):
+    """
+    Uses the LLM to classify whether a message is a verifiable news claim
+    or just regular chat/spam. Designed for the WhatsApp overlay to avoid
+    wasting API calls on non-news messages.
+    """
+    message = request.message.strip()
+
+    # Quick length filter — too short to be news
+    if len(message) < 25:
+        return {"is_news": False, "confidence": 0.95, "reason": "Message too short to be a news claim"}
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                f"{OLLAMA_BASE_URL}/api/generate",
+                json={
+                    "model": DEFAULT_MODEL,
+                    "prompt": CLASSIFY_PROMPT.format(message=message),
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.0,
+                        "num_ctx": 1024,
+                    },
+                },
+            )
+            resp.raise_for_status()
+            raw = resp.json().get("response", "")
+
+            # Strip <think> tags if present
+            import re
+            raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+
+            sanitized = _sanitize_llm_json(raw)
+            import json_repair
+            parsed = json_repair.loads(sanitized)
+
+            if isinstance(parsed, dict):
+                return {
+                    "is_news": bool(parsed.get("is_news", False)),
+                    "confidence": float(parsed.get("confidence", 0.5)),
+                    "reason": str(parsed.get("reason", "LLM classification")),
+                }
+
+    except Exception as e:
+        logger.error(f"Classification failed: {e}")
+
+    # Fallback: assume not news
+    return {"is_news": False, "confidence": 0.3, "reason": "Classification failed, defaulting to not news"}
 
 
 class VerifyRequest(BaseModel):
