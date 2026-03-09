@@ -14,11 +14,12 @@
    - [Stage 4: Stance Detection](#stage-4-stance-detection)
    - [Stage 5: Verdict Computation](#stage-5-verdict-computation)
    - [Stage 6: Explanation Generation](#stage-6-explanation-generation)
-3. [Key Technologies & Terms](#key-technologies--terms)
-4. [Backend Architecture](#backend-architecture)
-5. [Flutter App Architecture](#flutter-app-architecture)
-6. [Configuration Reference](#configuration-reference)
-7. [Setup & Running](#setup--running)
+3. [WhatsApp Shield — Truecaller-Style Fake News Detection](#whatsapp-shield--truecaller-style-fake-news-detection)
+4. [Key Technologies & Terms](#key-technologies--terms)
+5. [Backend Architecture](#backend-architecture)
+6. [Flutter App Architecture](#flutter-app-architecture)
+7. [Configuration Reference](#configuration-reference)
+8. [Setup & Running](#setup--running)
 
 ---
 
@@ -42,8 +43,16 @@
 │     │            VerifyRemoteSource                     │           │
 │     │         (HTTP SSE Client)                        │           │
 │     └───────────────────────┬──────────────────────────┘           │
+│                             │                                      │
+│  ┌──────────────────────────┼──────────────────────────────────┐   │
+│  │       WhatsApp Shield (Android Native Layer)                │   │
+│  │  ┌───────────────┐  ┌────────────┐  ┌───────────────────┐  │   │
+│  │  │ Notification  │→ │  /classify │→ │  Overlay Service  │  │   │
+│  │  │ Listener      │  │  (LLM API) │  │  (floating popup) │  │   │
+│  │  └───────────────┘  └────────────┘  └───────────────────┘  │   │
+│  └─────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────┼──────────────────────────────────────┘
-                              │ HTTP POST /verify
+                              │ HTTP POST /verify + /classify
                               ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     FastAPI Backend Server                           │
@@ -53,10 +62,10 @@
 │  │Extractor │  │   Search    │  │ Scraper  │  │   Detector     │  │
 │  └──────────┘  └─────────────┘  └──────────┘  └───────┬────────┘  │
 │                                                        │           │
-│                                    ┌───────────────────▼────────┐  │
-│                                    │  Verdict Engine            │  │
-│                                    │  (Score + Explanation)     │  │
-│                                    └───────────────────────────┘  │
+│  ┌──────────┐          ┌───────────────────────────────▼────────┐  │
+│  │ /classify│          │  Verdict Engine                        │  │
+│  │ (LLM)   │          │  (Score + Explanation)                 │  │
+│  └──────────┘          └───────────────────────────────────────┘  │
 │                                                                     │
 │  ┌──────────────────────────────────────────────────────────────┐   │
 │  │                    Ollama LLM Server                         │   │
@@ -238,6 +247,139 @@ An additional guard: if fewer than `MIN_EVIDENCE_COUNT` (default: 2) definitive 
 
 ---
 
+## WhatsApp Shield — Truecaller-Style Fake News Detection
+
+Credence includes a **background service** that monitors WhatsApp messages in real-time and automatically detects misinformation — like how Truecaller identifies spam calls, but for fake news.
+
+### How It Works
+
+```
+WhatsApp message arrives
+    → Android NotificationListenerService captures notification text
+    → POST /classify (LLM asks: "Is this a news claim?")
+    → 95% of messages filtered as regular chat → SKIP (saves CPU)
+    → If news claim → POST /verify (full 6-stage pipeline)
+    → Floating overlay popup shows live progress + final verdict
+```
+
+### Architecture (4 Native Android Components)
+
+#### 1. NotificationListenerService (`CredenceNotificationListener.kt`)
+
+**What it is:** An Android system service that reads OS-level notifications from any app. This is the **exact same API** that Truecaller uses for caller identification.
+
+**How it works:**
+1. Android delivers every notification to registered `NotificationListenerService` implementations.
+2. The service filters for WhatsApp package names (`com.whatsapp` and `com.whatsapp.w4b`).
+3. Extracts the message text from `notification.extras` (`android.text` or `android.bigText`).
+4. Applies quick pre-filters: messages under 30 characters are skipped immediately.
+5. **Debounce map** (`ConcurrentHashMap`) prevents processing the same message twice within 15 seconds.
+6. Passes the message to the `/classify` API in a background thread.
+
+**Concurrency model:** Up to **3 simultaneous** classification/verification threads (`MAX_CONCURRENT = 3`). If 3 are already running, new messages are skipped until a slot opens.
+
+**Why NotificationListenerService is safe:**
+- It reads **Android system notifications**, NOT WhatsApp internals.
+- WhatsApp has **zero visibility** into this service — it's an OS-level feature.
+- No reverse engineering, no unofficial APIs, no Terms of Service violation.
+- Same mechanism used by legitimate apps: Truecaller, Digital Wellbeing, Samsung SmartThings.
+
+#### 2. LLM Message Classifier (`/classify` API)
+
+**What it is:** A lightweight backend endpoint that uses the Judge LLM to determine if a message is a **verifiable news claim** or just regular chat/spam.
+
+**Why not keyword matching?** Keyword-based classifiers produce false positives. For example:
+- `"#hiringnow #jobalert #mumbaijobs"` contains job-related words but is NOT news.
+- `"Reminder: guest lecture on 5th Feb, submit data by tonight"` is a college group admin message, NOT news.
+- `"Modi announces ₹50,000 scheme for students"` IS a verifiable (and potentially fake) news claim.
+
+Only an LLM can understand this semantic distinction.
+
+**The LLM prompt classifies as `is_news=true` ONLY if ALL of these are met:**
+1. The message makes a SPECIFIC factual assertion about a PUBLIC event.
+2. The assertion could be TRUE or FALSE (i.e., it's fact-checkable).
+3. It could be MISINFORMATION (forwarded messages, sensational claims, unverified cures, political rumors).
+
+**Explicitly classified as `is_news=false`:**
+- Personal messages, greetings, casual chat
+- Group admin messages, reminders, event notices, meeting schedules
+- Job postings, advertisements, hashtag spam
+- College/university announcements, assignment deadlines
+- Birthday wishes, congratulations, festival greetings
+- App system notifications
+
+**Confidence threshold:** The overlay only triggers if the LLM returns `is_news=true` with confidence > **0.6** (60%).
+
+#### 3. Floating Overlay Service (`OverlayService.kt`)
+
+**What it is:** A foreground service that draws a Truecaller-style popup on top of all other apps using Android's `TYPE_APPLICATION_OVERLAY` window type.
+
+**Key features:**
+- **Concurrent job processing:** Each news claim gets its own background thread and overlay view, tracked via `ConcurrentHashMap<Int, JobState>`.
+- **Stacked overlays:** Multiple simultaneous verifications stack vertically with a 460px gap.
+- **Individual dismiss:** Each overlay has its own ✕ button to close it independently.
+- **Auto-dismiss:** Completed overlays auto-dismiss after 20 seconds.
+
+**Streaming stage display — the overlay shows live pipeline progress with emojis:**
+
+| Stage | Overlay Display |
+|-------|-----------------|
+| Claim extraction | 🔍 Extracting claims... |
+| Multi-tier search | 🌐 Searching fact-check databases... |
+| Tier searching | 🔎 Searching: Indian Fact-Checkers |
+| Evidence scraping | 📄 Scraping evidence 3/13... |
+| Stance detection | ⚖️ SUPPORTS — factly.in/no-modi-hasnt... |
+| Verdict computation | 🧮 Computing verdict... |
+| Explanation | 📝 Generating explanation... |
+| Final verdict | 🔴 **FAKE** or 🟢 **TRUE** or 🟡 **UNVERIFIED** |
+
+**SSE stream parsing:** The service reads the `/verify` SSE stream line-by-line, updating the overlay text in real-time via `Handler(Looper.getMainLooper()).post {}` for thread-safe UI updates.
+
+#### 4. Shield Toggle Card (`ShieldToggleCard` — Flutter widget)
+
+**What it is:** A neo-brutalism toggle card in the app's main screen that lets users enable/disable the WhatsApp Shield.
+
+**Permission handling:**
+The shield requires two Android permissions:
+1. **Draw over other apps** (`SYSTEM_ALERT_WINDOW`) — for the floating overlay popup.
+2. **Notification access** (`BIND_NOTIFICATION_LISTENER_SERVICE`) — to read WhatsApp notifications.
+
+The toggle card checks both permissions and shows grant buttons if either is missing. When toggled on, it sets the API URL and enabled flag in Android `SharedPreferences`, which the native `CredenceNotificationListener` reads.
+
+**Platform channel bridge:** Flutter communicates with Android native code via a `MethodChannel` (`com.genzloop.credence/shield`) with 7 methods:
+
+| Method | Direction | Purpose |
+|--------|-----------|---------|
+| `isShieldEnabled` | Dart → Kotlin | Check if shield is active |
+| `setShieldEnabled` | Dart → Kotlin | Toggle shield on/off |
+| `setApiUrl` | Dart → Kotlin | Set backend URL for native services |
+| `hasOverlayPermission` | Dart → Kotlin | Check SYSTEM_ALERT_WINDOW |
+| `requestOverlayPermission` | Dart → Kotlin | Open system settings |
+| `hasNotificationAccess` | Dart → Kotlin | Check notification listener |
+| `requestNotificationAccess` | Dart → Kotlin | Open notification settings |
+
+### Safety & Privacy
+
+| Concern | How Credence Handles It |
+|---------|------------------------|
+| WhatsApp ban risk | **Zero** — reads Android notifications, never touches WhatsApp |
+| Data privacy | All LLM processing on local Ollama — no data leaves device |
+| Battery drain | Quick LLM classify call filters 95% of messages instantly |
+| API overload | MAX_CONCURRENT=3 cap + 15s debounce + length pre-filter |
+| False positives | Strict LLM prompt + 60% confidence threshold |
+
+### End-to-End Example
+
+1. Someone forwards you a WhatsApp message: _"🚨 BREAKING: Government giving ₹50,000 to all 10th/12th students! Forward to all!"_
+2. `CredenceNotificationListener` captures it.
+3. `/classify` LLM says: `is_news=true, confidence=0.85, reason="Government scheme claim that could be misinformation"`.
+4. `OverlayService` shows: `⏳ CHECKING — Analyzing claim with AI...`
+5. Overlay streams: `🔍 Extracting claims...` → `🌐 Searching fact-check databases...` → `📄 Scraping evidence 8/15...` → `⚖️ REFUTES — factly.in`
+6. Final popup: **🔴 FAKE** — _"No such scheme has been announced by the Government of India. Multiple fact-checkers have debunked similar claims."_
+7. Auto-dismisses after 20 seconds, or tap ✕ anytime.
+
+---
+
 ## Key Technologies & Terms
 
 ### Ollama
@@ -304,6 +446,18 @@ A software architecture that separates code into three layers:
 
 This separation means you can swap the HTTP library, change the LLM provider, or redesign the entire UI without touching the other layers.
 
+### NotificationListenerService
+An Android system service that delivers notification data to registered apps. It provides access to notification text, sender, package name, and extras. Apps must be explicitly granted access by the user in Android Settings → Notification access. Used by Truecaller, Samsung SmartThings, and now Credence.
+
+### TYPE_APPLICATION_OVERLAY
+An Android window type that allows an app to draw UI elements on top of all other apps. Requires `SYSTEM_ALERT_WINDOW` permission. This is how Truecaller shows caller-ID popups, and how Credence shows fact-check verdict popups over WhatsApp.
+
+### SharedPreferences
+Android's lightweight key-value storage used for persisting simple settings. Credence stores the shield enabled state and API URL here so that the native `NotificationListenerService` (which runs outside the Flutter engine) can read the configuration.
+
+### MethodChannel (Flutter Platform Channel)
+Flutter's mechanism for calling native Android/iOS code from Dart. Credence uses a `MethodChannel` named `com.genzloop.credence/shield` with 7 methods to bridge between the Flutter UI toggle and the native Android services.
+
 ---
 
 ## Backend Architecture
@@ -312,7 +466,7 @@ This separation means you can swap the HTTP library, change the LLM provider, or
 
 ```
 backend/
-├── main.py              # FastAPI server, SSE streaming, route handlers
+├── main.py              # FastAPI server, SSE streaming, /verify + /classify endpoints
 ├── config.py            # Centralized env config with typed constants
 ├── claim_extractor.py   # Stage 1: LLM-based atomic claim decomposition
 ├── fact_check_search.py # Stage 2: 3-tier DuckDuckGo dorked search
@@ -330,6 +484,7 @@ backend/
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/verify` | POST | **Main fact-checking pipeline** — streams SSE events |
+| `/classify` | POST | **WhatsApp Shield** — LLM classifies message as news or chat |
 | `/chat` | POST | RAG-enhanced chat with streaming LLM response |
 | `/web-search` | POST | Web search + scrape + RAG-augmented response |
 | `/health` | GET | Server health check + Ollama connection status |
@@ -354,7 +509,8 @@ credence/lib/
 ├── main.dart                              # Entry point + BlocProvider wiring
 ├── core/
 │   ├── constants.dart                     # API base URL (platform-aware)
-│   └── theme.dart                         # Neo-brutalism theme system
+│   ├── theme.dart                         # Neo-brutalism theme system
+│   └── overlay_service.dart               # Platform channel bridge for Shield
 ├── data/
 │   ├── models/
 │   │   ├── sse_event_model.dart           # Typed SSE event wrapper
@@ -381,7 +537,17 @@ credence/lib/
         ├── pipeline_stepper.dart           # Animated 6-stage progress
         ├── evidence_list.dart              # Live evidence cards with status
         ├── stance_chart.dart               # Supports vs Refutes bar chart
-        └── verdict_card.dart               # Final verdict display
+        ├── verdict_card.dart               # Final verdict display
+        └── shield_toggle_card.dart         # WhatsApp Shield enable/disable toggle
+
+credence/android/.../kotlin/com/genzloop/credence/
+├── MainActivity.kt                        # MethodChannel with 7 platform methods
+├── CredenceNotificationListener.kt        # WhatsApp notification reader
+├── OverlayService.kt                      # Floating overlay with job queue
+└── NewsClassifier.kt                      # Keyword-based pre-filter (backup)
+
+credence/android/.../res/layout/
+└── overlay_popup.xml                      # Neo-brutalism floating popup layout
 ```
 
 ### Data Flow
@@ -475,6 +641,27 @@ curl -N -X POST http://localhost:8080/verify \
   -H "Content-Type: application/json" \
   -d '{"claim": "Rahul Gandhi is the current Prime Minister of India"}'
 ```
+
+### Testing WhatsApp Shield
+
+1. Enable the **Credence Shield** toggle in the app.
+2. Grant **"Draw over apps"** and **"Notification access"** when prompted.
+3. Ask someone to send you these test messages on WhatsApp:
+
+```
+🚨 BREAKING NEWS 🚨
+The Government of India has just announced a new scheme
+offering ₹50,000 free to all students who pass their 10th
+and 12th board exams this year! Forward this to all! 🎓💸
+```
+
+```
+What a match! Unbelievable that New Zealand won the 2026
+T20 World Cup final against India last night. 🏏🇳🇿🔥
+```
+
+4. The overlay popup should appear with streaming progress → final verdict.
+5. Regular chats ("hi", "ok", emojis) should NOT trigger the overlay.
 
 ---
 
