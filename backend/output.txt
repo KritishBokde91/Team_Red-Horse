@@ -1,0 +1,399 @@
+data: {"type": "searching", "query": "What is the latest status of the OpenAI Sora model?"}
+data: {"type": "found", "urls": ["https://en.wikipedia.org/wiki/Sora_(text-to-video_model)", "https://openai.com/index/sora-2/", "https://help.openai.com/en/articles/12593142-sora-release-notes", "https://openai.com/index/sora-is-here/", "https://openai.com/index/sora/", "https://openai.com/sora/", "https://skywork.ai/blog/sora-2-release-date-availability-and-how-to-get-invited/", "https://www.theverge.com/2024/12/9/24317092/openai-sora-text-to-video-ai-launch", "https://learn.microsoft.com/en-us/answers/questions/5790204/azure-openai-sora-(model-sora-v2025-05-02)-retirin", "https://intuitionlabs.ai/articles/openai-sora-2-video-app", "https://wavespeed.ai/blog/posts/openai-sora-2-complete-guide-2026/", "https://www.datacamp.com/blog/openai-announces-sora-text-to-video-generative-ai-is-about-to-go-mainstream", "https://techcrunch.com/2026/01/29/openais-sora-app-is-struggling-after-its-stellar-launch/", "https://www.glbgpt.com/hub/openai-sora-2-availability/", "https://platform.openai.com/docs/models/sora-2"], "total": 15}
+data: {"type": "scraping", "url": "https://en.wikipedia.org/wiki/Sora_(text-to-video_model)", "index": 1, "total": 15}
+data: {"type": "scraped", "url": "https://en.wikipedia.org/wiki/Sora_(text-to-video_model)", "title": "Sora (text-to-video model) - Wikipedia", "chars": 8000}
+data: {"type": "scraping", "url": "https://openai.com/index/sora-2/", "index": 2, "total": 15}
+data: {"type": "scraped", "url": "https://openai.com/index/sora-2/", "title": "Sora 2 is here | OpenAI", "chars": 8000}
+data: {"type": "scraping", "url": "https://help.openai.com/en/articles/12593142-sora-release-notes", "index": 3, "total": 15}
+data: {"type": "scraped", "url": "https://help.openai.com/en/articles/12593142-sora-release-notes", "title": "Sora - Release Notes | OpenAI Help Center", "chars": 7564}
+data: {"type": "scraping", "url": "https://openai.com/index/sora-is-here/", "index": 4, "total": 15}
+data: {"type": "scraped", "url": "https://openai.com/index/sora-is-here/", "title": "Sora is here | OpenAI", "chars": 5284}
+data: {"type": "scraping", "url": "https://openai.com/index/sora/", "index": 5, "total": 15}
+data: {"type": "scraped", "url": "https://openai.com/index/sora/", "title": "Sora: Creating video from text | OpenAI", "chars": 5134}
+data: {"type": "scraping", "url": "https://openai.com/sora/", "index": 6, "total": 15}
+data: {"type": "scraped", "url": "https://openai.com/sora/", "title": "Sora | OpenAI", "chars": 806}
+data: {"type": "scraping", "url": "https://skywork.ai/blog/sora-2-release-date-availability-and-how-to-get-invited/", "index": 7, "total": 15}
+data: {"type": "scraped", "url": "https://skywork.ai/blog/sora-2-release-date-availability-and-how-to-get-invited/", "title": "Sora 2 Release Date: Availability, Invites &amp; New Features (2025) - Skywork ai", "chars": 7152}
+data: {"type": "scraping", "url": "https://www.theverge.com/2024/12/9/24317092/openai-sora-text-to-video-ai-launch", "index": 8, "total": 15}
+data: {"type": "scraped", "url": "https://www.theverge.com/2024/12/9/24317092/openai-sora-text-to-video-ai-launch", "title": "OpenAI has finally released Sora | The Verge", "chars": 3388}
+data: {"type": "scraping", "url": "https://learn.microsoft.com/en-us/answers/questions/5790204/azure-openai-sora-(model-sora-v2025-05-02)-retirin", "index": 9, "total": 15}
+data: {"type": "scraped", "url": "https://learn.microsoft.com/en-us/answers/questions/5790204/azure-openai-sora-(model-sora-v2025-05-02)-retirin", "title": "Azure OpenAI Sora (model sora v2025-05-02) retiring Feb 28, 2026 \u2014 no successor available (Sora 2 not visible) + video content download endpoint returns 404 - Microsoft Q&amp;A", "chars": 5863}
+data: {"type": "scraping", "url": "https://intuitionlabs.ai/articles/openai-sora-2-video-app", "index": 10, "total": 15}
+data: {"type": "scraped", "url": "https://intuitionlabs.ai/articles/openai-sora-2-video-app", "title": "Sora 2 Explained: OpenAI&#x27;s AI Video Model &amp; TikTok-Style App | IntuitionLabs", "chars": 8000}
+data: {"type": "scraping", "url": "https://wavespeed.ai/blog/posts/openai-sora-2-complete-guide-2026/", "index": 11, "total": 15}
+data: {"type": "scraped", "url": "https://wavespeed.ai/blog/posts/openai-sora-2-complete-guide-2026/", "title": "OpenAI Sora 2 Complete Guide: Features, Pricing, and How to Use in 2026 | WaveSpeedAI Blog", "chars": 8000}
+data: {"type": "scraping", "url": "https://www.datacamp.com/blog/openai-announces-sora-text-to-video-generative-ai-is-about-to-go-mainstream", "index": 12, "total": 15}
+data: {"type": "scraped", "url": "https://www.datacamp.com/blog/openai-announces-sora-text-to-video-generative-ai-is-about-to-go-mainstream", "title": "What Is OpenAI&#x27;s Sora? How It Works, Examples, Features | DataCamp", "chars": 8000}
+data: {"type": "scraping", "url": "https://techcrunch.com/2026/01/29/openais-sora-app-is-struggling-after-its-stellar-launch/", "index": 13, "total": 15}
+data: {"type": "scraped", "url": "https://techcrunch.com/2026/01/29/openais-sora-app-is-struggling-after-its-stellar-launch/", "title": "OpenAI&#039;s Sora app is struggling after its stellar launch | TechCrunch", "chars": 4779}
+data: {"type": "scraping", "url": "https://www.glbgpt.com/hub/openai-sora-2-availability/", "index": 14, "total": 15}
+data: {"type": "scraped", "url": "https://www.glbgpt.com/hub/openai-sora-2-availability/", "title": "OpenAI Sora 2 Availability 2026: How to Access Without an Invite Code", "chars": 4518}
+data: {"type": "scraping", "url": "https://platform.openai.com/docs/models/sora-2", "index": 15, "total": 15}
+data: {"type": "scraped", "url": "https://platform.openai.com/docs/models/sora-2", "title": "Sora 2 Model | OpenAI API", "chars": 1947}
+data: {"type": "summarizing"}
+data: {"type": "done", "sources": [{"url": "https://en.wikipedia.org/wiki/Sora_(text-to-video_model)", "title": "Sora (text-to-video model) - Wikipedia", "snippet": "1 week ago -In February 2024, OpenAI previewed ... US and Canada in December 2024, andthe second generation, called Sora 2, was released to select users in the US and Canada at the end of September 2025....", "chars": 8000}, {"url": "https://openai.com/index/sora-2/", "title": "Sora 2 is here | OpenAI", "snippet": "Our latest video generation model ismore physically accurate, realistic, and controllable than prior systems. It also features synchronized dialogue and sound effects. Create with it in the new Sora app.", "chars": 8000}, {"url": "https://help.openai.com/en/articles/12593142-sora-release-notes", "title": "Sora - Release Notes | OpenAI Help Center", "snippet": "We look forward to seeing more of what everyone creates. Sora isnow available in Argentina, Chile, Colombia, Costa Rica, Dominican Republic, Mexico, Panama, Paraguay, Peru, and Uruguay.", "chars": 7564}, {"url": "https://openai.com/index/sora-is-here/", "title": "Sora is here | OpenAI", "snippet": "We\u2019re moving our video generation model out of research preview. ... Our video generation model isrolling out at sora.com(opens in a new window). ... our initial research progress on world simulation.", "chars": 5284}, {"url": "https://openai.com/index/sora/", "title": "Sora: Creating video from text | OpenAI", "snippet": "Today, Sora isbecoming available to red teamers to assess critical areas for harms or risks. We are also granting access to a number of visual artists, designers, and filmmakers to gain feedback on how to advance the model to be most helpful ...", "chars": 5134}, {"url": "https://openai.com/sora/", "title": "Sora | OpenAI", "snippet": "Take someone else\u2019s creation and put your spin on it. Swap characters, change the vibe, add new scenes, or extend the story.", "chars": 806}, {"url": "https://skywork.ai/blog/sora-2-release-date-availability-and-how-to-get-invited/", "title": "Sora 2 Release Date: Availability, Invites &amp; New Features (2025) - Skywork ai", "snippet": "December 16, 2025 -This timing lines up with rumors of OpenAI\u2019s \u201cfive-project rollout\u201d\u2014and it is clearly the most anticipated one yet. This article will provide a detailed analysis of the Sora 2 launch status, key features, and the latest strategies for quickly obtaining an invite code. The Sora 2 model and its accompanying app were unveiled on September 30 during a live stream.", "chars": 7152}, {"url": "https://www.theverge.com/2024/12/9/24317092/openai-sora-text-to-video-ai-launch", "title": "OpenAI has finally released Sora | The Verge", "snippet": "December 9, 2024 -If you don\u2019t have a ChatGPT subscription, you\u2019ll still be able to browse through the feed of AI-generated videos created by other people using Sora. While the model will become available in the US and many other countries today, OpenAI CEO Sam Altman said that it may \u201cbe a while\u201d for a launch in \u201cmost of Europe and the UK.\u201d", "chars": 3388}, {"url": "https://learn.microsoft.com/en-us/answers/questions/5790204/azure-openai-sora-(model-sora-v2025-05-02)-retirin", "title": "Azure OpenAI Sora (model sora v2025-05-02) retiring Feb 28, 2026 \u2014 no successor available (Sora 2 not visible) + video content download endpoint returns 404 - Microsoft Q&amp;A", "snippet": "The Sora model sora\u2011v2025\u201105\u201102 is a preview model and isreaching its scheduled retirement, as shown in the Azure portal and model lifecycle documentation.", "chars": 5863}, {"url": "https://intuitionlabs.ai/articles/openai-sora-2-video-app", "title": "Sora 2 Explained: OpenAI&#x27;s AI Video Model &amp; TikTok-Style App | IntuitionLabs", "snippet": "October 25, 2025 -Sora 2is OpenAI\u2019s latest generative video model, released on September 30, 2025, which can turn text prompts (and reference images or videos) into short, realistic video clips with synchronized audio.", "chars": 8000}, {"url": "https://wavespeed.ai/blog/posts/openai-sora-2-complete-guide-2026/", "title": "OpenAI Sora 2 Complete Guide: Features, Pricing, and How to Use in 2026 | WaveSpeedAI Blog", "snippet": "December 27, 2025 -OpenAI Sora 2 is the next-generation video generation model released onSeptember 30, 2026, marking a significant leap forward in AI-powered video creation.", "chars": 8000}, {"url": "https://www.datacamp.com/blog/openai-announces-sora-text-to-video-generative-ai-is-about-to-go-mainstream", "title": "What Is OpenAI&#x27;s Sora? How It Works, Examples, Features | DataCamp", "snippet": "December 9, 2024 -Day 3 of the \u201c12 Days of OpenAI\u201d came with an exciting announcement:Sora AI is now available. This text-to-video generative AI model looks incredibly impressive so far, introducing some huge potential across many industries.", "chars": 8000}, {"url": "https://techcrunch.com/2026/01/29/openais-sora-app-is-struggling-after-its-stellar-launch/", "title": "OpenAI&#039;s Sora app is struggling after its stellar launch | TechCrunch", "snippet": "January 29, 2026 -New data suggests the app is seeingdeclines in both app downloads and consumer spending, as the early hype about the AI video social network wears off. Powered by OpenAI\u2019s video generation model Sora 2, the iOS version topped 100,000 installs ...", "chars": 4779}, {"url": "https://www.glbgpt.com/hub/openai-sora-2-availability/", "title": "OpenAI Sora 2 Availability 2026: How to Access Without an Invite Code", "snippet": "As ofOctober 2025, OpenAI Sora 2 is officially available only in the U.S. and Canada. Learn about UK, Germany, and global availability, how to access Sora 2, and tips for early access and unofficial workarounds.", "chars": 4518}, {"url": "https://platform.openai.com/docs/models/sora-2", "title": "Sora 2 Model | OpenAI API", "snippet": "Sora 2is our new powerful media generation model, generating videos with synced audio. It can create richly detailed, dynamic clips from natural language or images. ... Pricing is based on the number of tokens used, or other metrics based on ...", "chars": 1947}], "context": "--- Source: Sora (text-to-video model) - Wikipedia (https://en.wikipedia.org/wiki/Sora_(text-to-video_model)) ---\nSora (text-to-video model) | Sora | | |---|---| | Developer | OpenAI | | Initial release | December 9, 2024 | | Stable release | Sora 2 (September 30, 2025 ) | | Platform | OpenAI | | Type | Text-to-video model | | Website | sora | | Part of a series on | | OpenAI | |---| | Products | | Models | | People | | Concepts | | Part of a series on | | Artificial intelligence (AI) | |---| Sora is a text-to-video model and social media app developed by OpenAI. The model generates short video clips based on prompts, and can also extend existing short videos. In February 2024, OpenAI previewed examples of its output to the public,[1] with the first generation of Sora released publicly for ChatGPT Plus and ChatGPT Pro users in the US and Canada in December 2024,[2][3] and the second generation, called Sora 2, was released to select users in the US and Canada at the end of September 2025.[4] It integrates social media features.[5][6] By default, the generator uses copyrighted material in its videos, unless copyright holders actively opt-out of having their content included. Videos contain a visible, moving digital watermark to prevent misuse, however a week after Sora 2's release third-party programs became prevalent which could remove the watermark. History [edit]Several other text-to-video generating models had been created prior to Sora, including Meta's Make-A-Video, Runway's Gen-2 and Google Veo.[7] OpenAI, the company behind Sora, had released DALL\u00b7E 3, the third of its DALL-E text-to-image models, in September 2023.[8] The team that developed Sora named it after the Japanese word for \"sky\" to signify its \"limitless creative potential\".[9] On February 15, 2024, OpenAI first previewed Sora by releasing multiple clips of high-definition videos that it had created, including an SUV driving down a mountain road, an animation of a \"short fluffy monster\" next to a candle, two people walking through Tokyo in the snow and fake historical footage of the California gold rush. OpenAI stated that it was able to generate videos as long as one minute.[7] The company then shared a technical report that highlighted the methods used to train the model.[10][11] OpenAI CEO Sam Altman also posted a series of tweets responding to Twitter users' prompts with Sora-generated videos of the prompts. Releases [edit]As of December 9, 2024, OpenAI had gradually made Sora available to the public for ChatGPT Pro and ChatGPT Plus users in the U.S. and Canada. Prior to this, the company had provided limited access to a small \"red team\", including experts in misinformation and bias, to perform adversarial testing on the model.[8] The company also shared Sora with a small group of creative professionals, including video makers and artists, to seek feedback on its usefulness in creative fields.[12] In February 2025, OpenAI announced plans to integrate Sora into ChatGPT by letting users generate Sora videos from the chatbot.[13] Sora 2 was unveiled on September 30, 2025, with an iOS app at the same time, as well as an Android app two months later.[4] All videos generated by the model feature a visible, moving watermark to prevent misuse behaviors of the tool.[14] The previous version of Sora also added a safety watermark to allow viewers to distinguish between real and fictional content.[15] On October 7, 404 Media reported that third-party programs that could remove the watermark from Sora 2 videos had become prevalent.[16] Some internet users and online content creators, such as Hank Green,[17] have called the mobile app \"SlopTok\", a reference to both the popular mobile app TikTok and the popular term AI slop.[18] Many outlets, such as Wired magazine, have noted that the Sora 2 app is overtly similar to TikTok in style and features.[2][19][20] Legal regulation [edit]Intellectual property [edit]In November 2024, an API key for Sora access was leaked by a group of testers on Hugging Face who posted a manifesto stating that they were protesting that Sora was used for \"art washing\". OpenAI revoked all access three hours after the leak was made public and stated that \"hundreds of artists\" have shaped the development and that \"participation is voluntary\".[21][22][23] At the time of its launch, Sora 2 allowed copyrighted content by default unless copyright holders contacted OpenAI to restrict the generation of their content on the platform.[24] On October 3, 2025, OpenAI stated that a future update to Sora 2 would give copyright holders \"more granular control\" over the generation of copyrighted content, but the company did not state whether existing content would be removed.[25] On October 6, the chairman of the MPA criticized OpenAI's approach to copyright with Sora 2.[26] On December 11, 2025, the Walt Disney Company announced that it will invest $1 billion in OpenAI to allow users to generate more than 200 of its copyrighted characters on Sora 2. These characters include those from Disney Animation, Pixar, Marvel Studios and Star Wars.[27] Capabilities and limitations [edit]The technology behind Sora is an adaptation of the technology behind DALL-E 3. According to OpenAI, Sora is a diffusion transformer,[28] a denoising latent diffusion model with one transformer as its denoiser. A video is generated in latent space by denoising 3D \"patches\", then transformed to standard space by a video decompressor. Recaptioning is employed to augment training data by using a video-to-text model to create detailed captions for videos.[11] OpenAI trained the model using publicly available videos as well as copyrighted videos licensed for the purpose, but did not reveal the number or the exact source of the videos.[9] Upon its release, OpenAI acknowledged some of Sora's shortcomings, including its limited capacity to simulate complex physics, to understand causality and to differentiate left from right.[29] OpenAI also stated that, in adherence to the company's existing safety practices, Sora will restrict text prompts for sexual, violent, hateful or celebrity imagery, as well as content featuring existing intellectual property.[8] Sora researcher Tim Brooks stated that the model learned how to create 3D graphics from its dataset alone, while fellow Sora researcher Bill Peebles said that the model automatically created different video angles without being prompted.[7] According to OpenAI, Sora-generated videos are also tagged with C2PA metadata to indicate that they are AI-processed.[9] Reception [edit]In 2024, Will Douglas Heaven of the MIT Technology Review called the demonstration videos \"impressive\", but noted that they must have been cherry-picked and may not be representative of Sora's typical output.[12] American academic Oren Etzioni expressed concerns over the technology's ability to create online disinformation for political campaigns.[9] For Wired, Steven Levy similarly wrote that it had the potential to become \"a misinformation train wreck\" and opined that its preview clips were \"impressive\" but \"not perfect\" and that it \"show[ed] an emergent grasp of cinematic grammar\" due to its unprompted shot changes. Levy added, \"[i]t will be a very long time, if ever, before text-to-video threatens actual filmmaking.\"[7] Lisa Lacy of CNET called its example videos \"remarkably realistic \u2013 except perhaps when a human face appears close up or when sea creatures are swimming\".[8] Filmmaker Tyler Perry announced he would be putting a planned $800 million expansion of his Atlanta studio on hold, expressing concern about Sora's potential impact on the film industry.[30][31] 2025 [edit]In October 2025, The New York Times remarked that the release of the Sora 2 app in September 2025 was \"jaw-dropping (for better and worse)\" though also remarked that the app was a \"social network in disguise\" and \"the type of product that companies like Meta and X have sought to build: a way to bring A.I. to the masses that people can share.\" The article expressed concern regarding the product's potential impact on society and its pote\n\n--- Source: Sora 2 is here | OpenAI (https://openai.com/index/sora-2/) ---\nSora 2 is here Our latest video generation model is more physically accurate, realistic, and more controllable than prior systems. It also features synchronized dialogue and sound effects. Create with it in the new Sora app. Today we\u2019re releasing Sora 2, our flagship video and audio generation model. The original Sora model from February 2024 was in many ways the GPT\u20111 moment for video\u2014the first time video generation started to seem like it was working, and simple behaviors like object permanence emerged from scaling up pre-training compute. Since then, the Sora team has been focused on training models with more advanced world simulation capabilities. We believe such systems will be critical for training AI models that deeply understand the physical world. A major milestone for this is mastering pre-training and post-training on large-scale video data, which are in their infancy compared to language. With Sora 2, we are jumping straight to what we think may be the GPT\u20113.5 moment for video. Sora 2 can do things that are exceptionally difficult\u2014and in some instances outright impossible\u2014for prior video generation models: Olympic gymnastics routines, backflips on a paddleboard that accurately model the dynamics of buoyancy and rigidity, and triple axels while a cat holds on for dear life. Prior video models are overoptimistic\u2014they will morph objects and deform reality to successfully execute upon a text prompt. For example, if a basketball player misses a shot, the ball may spontaneously teleport to the hoop. In Sora 2, if a basketball player misses a shot, it will rebound off the backboard. Interestingly, \u201cmistakes\u201d the model makes frequently appear to be mistakes of the internal agent that Sora 2 is implicitly modeling; though still imperfect, it is better about obeying the laws of physics compared to prior systems. This is an extremely important capability for any useful world simulator\u2014you must be able to model failure, not just success. The model is also a big leap forward in controllability, able to follow intricate instructions spanning multiple shots while accurately persisting world state. It excels at realistic, cinematic, and anime styles. As a general purpose video-audio generation system, it is capable of creating sophisticated background soundscapes, speech, and sound effects with a high degree of realism. You can also directly inject elements of the real world into Sora 2. For example, by observing a video of one of our teammates, the model can insert them into any Sora-generated environment with an accurate portrayal of appearance and voice. This capability is very general, and works for any human, animal or object. The model is far from perfect and makes plenty of mistakes, but it is validation that further scaling up neural networks on video data will bring us closer to simulating reality. On the road to general-purpose simulation and AI systems that can function in the physical world, we think people can have a lot of fun with the models we\u2019re building along the way. We first started playing with this \u201cupload yourself\u201d feature several months ago on the Sora team, and we all had a blast with it. It kind of felt like a natural evolution of communication\u2014from text messages to emojis to voice notes to this. So today, we\u2019re launching a new social iOS app just called \u201cSora,\u201d powered by Sora 2. Inside the app, you can create, remix each other\u2019s generations, discover new videos in a customizable Sora feed, and bring yourself or your friends in via a feature called \u201ccharacters\u201d. With characters, you can drop yourself straight into any Sora scene with remarkable fidelity after a short one-time video-and-audio recording in the app to verify your identity and capture your likeness. Last week, we launched the app internally to all of OpenAI. We\u2019ve already heard from our colleagues that they\u2019re making new friends at the company because of the feature. We think a social app built around this \u201ccharacters\u201d feature is the best way to experience the magic of Sora 2. Concerns about doomscrolling, addiction, isolation, and RL-sloptimized feeds are top of mind\u2014here is what we are doing about it. We are giving users the tools and optionality to be in control of what they see on the feed. Using OpenAI's existing large language models, we have developed a new class of recommender algorithms that can be instructed through natural language. We also have built-in mechanisms to periodically poll users on their wellbeing and proactively give them the option to adjust their feed. By default, we show you content heavily biased towards people you follow or interact with, and prioritize videos that the model thinks you\u2019re most likely to use as inspiration for your own creations. We are not optimizing for time spent in feed, and we explicitly designed the app to maximize creation, not consumption. You can find more details in our Feed Philosophy This app is made to be used with your friends. Overwhelming feedback from testers is that characters are what make this feel different and fun to use\u2014you have to try it to really get it, but it is a new and unique way to communicate with people. We\u2019re rolling this out as an invite-based app to make sure you come in with your friends. At a time when all major platforms are moving away from the social graph, we think characters will reinforce community. Protecting the wellbeing of teens is important to us. We are putting in default limits on how many generations teens can see per day in the feed, and we\u2019re also rolling out with stricter permissions on characters for this group. In addition to our automated safety stacks, we are scaling up teams of human moderators to quickly review cases of bullying if they arise. We are launching with Sora parental controls via ChatGPT so parents can override infinite scroll limits, turn off algorithm personalization, as well as manage direct message settings. With characters, you are in control of your likeness end-to-end with Sora. Only you decide who can use your character, and you can revoke access or remove any video that includes it at any time. Videos containing a character of you, including drafts created by other people, are viewable by you at any time. There are a lot of safety topics we\u2019ve tackled with this app\u2014consent around use of likeness, provenance, preventing the generation of harmful content, and much more. See our Sora 2 Safety doc for more details. A lot of problems with other apps stem from the monetization model incentivizing decisions that are at odds with user wellbeing. Transparently, our only current plan is to eventually give users the option to pay some amount to generate an extra video if there\u2019s too much demand relative to available compute. As the app evolves, we will openly communicate any chang\n\n[Content truncated for context window]"}
+data: {"content": "The"}
+data: {"content": " latest"}
+data: {"content": " status"}
+data: {"content": " of"}
+data: {"content": " Open"}
+data: {"content": "AI"}
+data: {"content": "'s"}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": " model"}
+data: {"content": " is"}
+data: {"content": " as"}
+data: {"content": " follows"}
+data: {"content": ":\n\n"}
+data: {"content": "1"}
+data: {"content": "."}
+data: {"content": " **"}
+data: {"content": "Release"}
+data: {"content": " of"}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": " "}
+data: {"content": "2"}
+data: {"content": "**:"}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": " "}
+data: {"content": "2"}
+data: {"content": ","}
+data: {"content": " the"}
+data: {"content": " improved"}
+data: {"content": " version"}
+data: {"content": ","}
+data: {"content": " was"}
+data: {"content": " launched"}
+data: {"content": " in"}
+data: {"content": " September"}
+data: {"content": " "}
+data: {"content": "2"}
+data: {"content": "0"}
+data: {"content": "2"}
+data: {"content": "5"}
+data: {"content": "."}
+data: {"content": " It"}
+data: {"content": " offers"}
+data: {"content": " enhanced"}
+data: {"content": " capabilities"}
+data: {"content": ","}
+data: {"content": " including"}
+data: {"content": " better"}
+data: {"content": " physical"}
+data: {"content": " accuracy"}
+data: {"content": ","}
+data: {"content": " synchronized"}
+data: {"content": " dialogue"}
+data: {"content": ","}
+data: {"content": " and"}
+data: {"content": " sound"}
+data: {"content": " effects"}
+data: {"content": "."}
+data: {"content": " The"}
+data: {"content": " model"}
+data: {"content": " is"}
+data: {"content": " designed"}
+data: {"content": " to"}
+data: {"content": " generate"}
+data: {"content": " more"}
+data: {"content": " realistic"}
+data: {"content": " and"}
+data: {"content": " complex"}
+data: {"content": " videos"}
+data: {"content": ","}
+data: {"content": " such"}
+data: {"content": " as"}
+data: {"content": " Olympic"}
+data: {"content": " gymn"}
+data: {"content": "astics"}
+data: {"content": " routines"}
+data: {"content": " and"}
+data: {"content": " dynamic"}
+data: {"content": " water"}
+data: {"content": " scenes"}
+data: {"content": ".\n\n"}
+data: {"content": "2"}
+data: {"content": "."}
+data: {"content": " **"}
+data: {"content": "Integration"}
+data: {"content": " into"}
+data: {"content": " a"}
+data: {"content": " Social"}
+data: {"content": " Media"}
+data: {"content": " App"}
+data: {"content": "**:"}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": " "}
+data: {"content": "2"}
+data: {"content": " is"}
+data: {"content": " integrated"}
+data: {"content": " into"}
+data: {"content": " a"}
+data: {"content": " new"}
+data: {"content": " iOS"}
+data: {"content": " app"}
+data: {"content": ","}
+data: {"content": " with"}
+data: {"content": " an"}
+data: {"content": " Android"}
+data: {"content": " version"}
+data: {"content": " following"}
+data: {"content": " two"}
+data: {"content": " months"}
+data: {"content": " later"}
+data: {"content": "."}
+data: {"content": " The"}
+data: {"content": " app"}
+data: {"content": " features"}
+data: {"content": " a"}
+data: {"content": " social"}
+data: {"content": " network"}
+data: {"content": " aspect"}
+data: {"content": " where"}
+data: {"content": " users"}
+data: {"content": " can"}
+data: {"content": " create"}
+data: {"content": " and"}
+data: {"content": " remix"}
+data: {"content": " videos"}
+data: {"content": ","}
+data: {"content": " insert"}
+data: {"content": " real"}
+data: {"content": " characters"}
+data: {"content": " ("}
+data: {"content": "using"}
+data: {"content": " a"}
+data: {"content": " short"}
+data: {"content": " recording"}
+data: {"content": "),"}
+data: {"content": " and"}
+data: {"content": " interact"}
+data: {"content": " with"}
+data: {"content": " friends"}
+data: {"content": ".\n\n"}
+data: {"content": "3"}
+data: {"content": "."}
+data: {"content": " **"}
+data: {"content": "Availability"}
+data: {"content": "**:"}
+data: {"content": " The"}
+data: {"content": " app"}
+data: {"content": " is"}
+data: {"content": " currently"}
+data: {"content": " invite"}
+data: {"content": "-based"}
+data: {"content": ","}
+data: {"content": " indicating"}
+data: {"content": " a"}
+data: {"content": " limited"}
+data: {"content": " release"}
+data: {"content": "."}
+data: {"content": " Open"}
+data: {"content": "AI"}
+data: {"content": " is"}
+data: {"content": " cautious"}
+data: {"content": " about"}
+data: {"content": " user"}
+data: {"content": " engagement"}
+data: {"content": ","}
+data: {"content": " focusing"}
+data: {"content": " on"}
+data: {"content": " creation"}
+data: {"content": " rather"}
+data: {"content": " than"}
+data: {"content": " consumption"}
+data: {"content": ","}
+data: {"content": " with"}
+data: {"content": " measures"}
+data: {"content": " to"}
+data: {"content": " ensure"}
+data: {"content": " user"}
+data: {"content": " well"}
+data: {"content": "-being"}
+data: {"content": " and"}
+data: {"content": " prevent"}
+data: {"content": " issues"}
+data: {"content": " like"}
+data: {"content": " addiction"}
+data: {"content": ".\n\n"}
+data: {"content": "4"}
+data: {"content": "."}
+data: {"content": " **"}
+data: {"content": "Safety"}
+data: {"content": " and"}
+data: {"content": " Control"}
+data: {"content": " Measures"}
+data: {"content": "**:"}
+data: {"content": " Open"}
+data: {"content": "AI"}
+data: {"content": " has"}
+data: {"content": " implemented"}
+data: {"content": " safety"}
+data: {"content": " features"}
+data: {"content": ","}
+data: {"content": " including"}
+data: {"content": " content"}
+data: {"content": " filtering"}
+data: {"content": ","}
+data: {"content": " parental"}
+data: {"content": " controls"}
+data: {"content": ","}
+data: {"content": " and"}
+data: {"content": " options"}
+data: {"content": " to"}
+data: {"content": " limit"}
+data: {"content": " video"}
+data: {"content": " generation"}
+data: {"content": " for"}
+data: {"content": " teens"}
+data: {"content": "."}
+data: {"content": " The"}
+data: {"content": " app"}
+data: {"content": " priorit"}
+data: {"content": "izes"}
+data: {"content": " user"}
+data: {"content": " interactions"}
+data: {"content": " with"}
+data: {"content": " friends"}
+data: {"content": " and"}
+data: {"content": " discour"}
+data: {"content": "ages"}
+data: {"content": " excessive"}
+data: {"content": " screen"}
+data: {"content": " time"}
+data: {"content": ".\n\n"}
+data: {"content": "5"}
+data: {"content": "."}
+data: {"content": " **"}
+data: {"content": "Ph"}
+data: {"content": "asing"}
+data: {"content": " Out"}
+data: {"content": " the"}
+data: {"content": " Original"}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": "**:"}
+data: {"content": " The"}
+data: {"content": " initial"}
+data: {"content": " version"}
+data: {"content": " of"}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": " is"}
+data: {"content": " being"}
+data: {"content": " phased"}
+data: {"content": " out"}
+data: {"content": ","}
+data: {"content": " with"}
+data: {"content": " its"}
+data: {"content": " Azure"}
+data: {"content": " model"}
+data: {"content": " retiring"}
+data: {"content": " in"}
+data: {"content": " February"}
+data: {"content": " "}
+data: {"content": "2"}
+data: {"content": "0"}
+data: {"content": "2"}
+data: {"content": "6"}
+data: {"content": ","}
+data: {"content": " though"}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": " "}
+data: {"content": "2"}
+data: {"content": "'s"}
+data: {"content": " full"}
+data: {"content": " availability"}
+data: {"content": " is"}
+data: {"content": " still"}
+data: {"content": " pending"}
+data: {"content": ".\n\n"}
+data: {"content": "6"}
+data: {"content": "."}
+data: {"content": " **"}
+data: {"content": "Ch"}
+data: {"content": "allenges"}
+data: {"content": " and"}
+data: {"content": " Consider"}
+data: {"content": "ations"}
+data: {"content": "**:"}
+data: {"content": " Despite"}
+data: {"content": " its"}
+data: {"content": " advancements"}
+data: {"content": ","}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": " "}
+data: {"content": "2"}
+data: {"content": " faces"}
+data: {"content": " challenges"}
+data: {"content": " like"}
+data: {"content": " copyright"}
+data: {"content": " issues"}
+data: {"content": ","}
+data: {"content": " third"}
+data: {"content": "-party"}
+data: {"content": " watermark"}
+data: {"content": " removal"}
+data: {"content": " tools"}
+data: {"content": ","}
+data: {"content": " and"}
+data: {"content": " societal"}
+data: {"content": " concerns"}
+data: {"content": " about"}
+data: {"content": " misinformation"}
+data: {"content": " and"}
+data: {"content": " addiction"}
+data: {"content": "."}
+data: {"content": " Open"}
+data: {"content": "AI"}
+data: {"content": " addresses"}
+data: {"content": " these"}
+data: {"content": " through"}
+data: {"content": " transparent"}
+data: {"content": " updates"}
+data: {"content": " and"}
+data: {"content": " safety"}
+data: {"content": " protocols"}
+data: {"content": ".\n\n"}
+data: {"content": "In"}
+data: {"content": " conclusion"}
+data: {"content": ","}
+data: {"content": " S"}
+data: {"content": "ora"}
+data: {"content": " "}
+data: {"content": "2"}
+data: {"content": " represents"}
+data: {"content": " a"}
+data: {"content": " significant"}
+data: {"content": " leap"}
+data: {"content": " in"}
+data: {"content": " AI"}
+data: {"content": "-generated"}
+data: {"content": " video"}
+data: {"content": " technology"}
+data: {"content": ","}
+data: {"content": " with"}
+data: {"content": " a"}
+data: {"content": " focus"}
+data: {"content": " on"}
+data: {"content": " integration"}
+data: {"content": " into"}
+data: {"content": " social"}
+data: {"content": " media"}
+data: {"content": " and"}
+data: {"content": " comprehensive"}
+data: {"content": " safety"}
+data: {"content": " measures"}
+data: {"content": " to"}
+data: {"content": " navigate"}
+data: {"content": " its"}
+data: {"content": " societal"}
+data: {"content": " impact"}
+data: {"content": "."}
+data: [DONE]
