@@ -8,6 +8,7 @@ chromadb
 sentence-transformers
 tiktoken
 loguru
+json-repair
 aiofiles
 ddgs
 trafilatura
@@ -16,4 +17,3 @@ webdriver-manager
 beautifulsoup4
 curl_cffi
 undetected-chromedriver
-loguru

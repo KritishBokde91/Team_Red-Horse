@@ -4,6 +4,7 @@ Uses deepseek-r1 to decompose a headline into structured, verifiable sub-claims.
 """
 from __future__ import annotations
 import json
+import json_repair
 import re
 import httpx
 from typing import List, Dict, Any
@@ -90,14 +91,13 @@ async def extract_claims(claim: str) -> Dict[str, Any]:
             # deepseek-r1 wraps reasoning in <think>...</think> tags
             raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
 
-            # Extract JSON block from potential markdown fences
-            json_match = re.search(r"\{[\s\S]*\}", raw)
-            if not json_match:
-                logger.warning(f"No JSON found in claim extraction response: {raw[:200]}")
-                return _fallback_extraction(claim)
+            sanitized = _sanitize_llm_json(raw)
+            # Use json_repair to robustly parse broken JSON from smaller models
+            parsed = json_repair.loads(sanitized)
 
-            sanitized = _sanitize_llm_json(json_match.group())
-            parsed = json.loads(sanitized)
+            if not isinstance(parsed, dict):
+                logger.warning(f"Parsed response is not a dictionary: {type(parsed)}")
+                return _fallback_extraction(claim)
 
             # Validate required fields
             if "atomic_claims" not in parsed or not parsed["atomic_claims"]:

@@ -1,0 +1,5 @@
+backend/__pycache__
+backend/main.pyc
+backend/output.txt
+.env
+backend/verify_output.txt

@@ -2,9 +2,10 @@
 verdict_engine.py - Weighted consensus engine + explanation generator.
 
 Computes a Veracity Score from stance-classified evidence:
-  Score = Σ(stance_weight × credibility_weight) / Σ(credibility_weight)
+  Score = sum(stance_weight * credibility_weight) / sum(credibility_weight)
 
-Maps score to verdict: FAKE (🔴), UNVERIFIED (🟡), TRUE (🟢)
+Only counts RELEVANT evidence (skips NOT_ENOUGH_INFO with low confidence).
+Maps score to verdict: FAKE, UNVERIFIED, TRUE.
 Generates a human-readable explanation via LLM.
 """
 from __future__ import annotations
@@ -26,33 +27,19 @@ STANCE_SCORES = {
     "NOT_ENOUGH_INFO": 0.0,
 }
 
-EXPLANATION_PROMPT = """You are a senior fact-checking editor. Based on the following evidence analysis, write a clear, concise verdict explanation for a general audience.
+EXPLANATION_PROMPT = """CLAIM: "{claim}"
+VERDICT: {verdict} (Score: {score:.2f})
 
-ORIGINAL CLAIM: "{claim}"
-
-VERDICT: {verdict} (Veracity Score: {score:.2f})
-
-EVIDENCE BREAKDOWN:
+Evidence summary:
 {evidence_summary}
 
-TASK: Write a 3–5 sentence explanation that:
-1. States the verdict clearly
-2. Cites the most important sources by name
-3. Explains WHY the claim is {verdict} based on the evidence
-4. Mentions any conflicting evidence if applicable
-
-Write the explanation directly, no JSON formatting needed. Be professional and neutral."""
+Write a 2-3 sentence explanation of why this claim is {verdict}. Cite source names. Be concise and neutral."""
 
 
 def compute_veracity_score(evidence_list: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Compute weighted veracity score from stance-classified evidence.
-
-    Returns dict with:
-      veracity_score: float (-1.0 to 1.0)
-      verdict: str (FAKE / UNVERIFIED / TRUE)
-      confidence: float (0.0 to 1.0)
-      sources_summary: {supports: int, refutes: int, neutral: int}
+    Only considers evidence with stance_confidence > 0.1 (filters out irrelevant).
     """
     if not evidence_list:
         return {
@@ -73,7 +60,12 @@ def compute_veracity_score(evidence_list: List[Dict[str, Any]]) -> Dict[str, Any
         cred_weight = ev.get("credibility_weight", 0.5)
         stance_conf = ev.get("stance_confidence", 0.5)
 
-        # Combined weight: source credibility × stance confidence
+        # Skip evidence with very low confidence (irrelevant articles)
+        if stance_conf <= 0.1:
+            neutral += 1
+            continue
+
+        # Combined weight: source credibility x stance confidence
         combined_weight = cred_weight * stance_conf
         stance_score = STANCE_SCORES.get(stance, 0.0)
 
@@ -124,25 +116,26 @@ async def generate_explanation(
 ) -> str:
     """
     Generate a human-readable explanation of the verdict using the LLM.
+    Only includes relevant evidence in the summary.
     """
-    # Build evidence summary for the prompt
+    # Build evidence summary - only include relevant evidence
     evidence_lines = []
     for i, ev in enumerate(evidence_list, 1):
         stance = ev.get("stance", "NOT_ENOUGH_INFO")
-        tier = ev.get("tier", "?")
+        conf = ev.get("stance_confidence", 0)
+        if conf <= 0.1:
+            continue  # Skip irrelevant
         title = ev.get("title", "Unknown")
         reasoning = ev.get("stance_reasoning", "")
-        evidence_lines.append(
-            f"  {i}. [{stance}] (Tier {tier}) {title}\n     Reasoning: {reasoning}"
-        )
+        evidence_lines.append(f"- [{stance}] {title}: {reasoning}")
 
-    evidence_summary = "\n".join(evidence_lines) if evidence_lines else "No evidence found."
+    evidence_summary = "\n".join(evidence_lines[:8]) if evidence_lines else "No relevant evidence found."
 
     verdict = verdict_data.get("verdict", "UNVERIFIED")
     score = verdict_data.get("veracity_score", 0.0)
 
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             resp = await client.post(
                 f"{OLLAMA_BASE_URL}/api/generate",
                 json={
@@ -155,15 +148,15 @@ async def generate_explanation(
                     ),
                     "stream": False,
                     "options": {
-                        "temperature": 0.3,
-                        "num_ctx": 4096,
+                        "temperature": 0.2,
+                        "num_ctx": 3072,
                     },
                 },
             )
             resp.raise_for_status()
             raw = resp.json().get("response", "")
 
-            # Strip <think> tags from deepseek-r1
+            # Strip <think> tags if present
             raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
             return raw if raw else _fallback_explanation(claim, verdict_data)
 
