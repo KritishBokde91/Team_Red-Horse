@@ -385,14 +385,26 @@ from stance_detector import detect_stances_batch
 from verdict_engine import compute_veracity_score, generate_explanation
 from search_scraper import scrape_url
 
-CLASSIFY_PROMPT = """You are a message classifier. Determine if the following message is a VERIFIABLE NEWS CLAIM or just a regular message (chat, greeting, spam, job posting, advertisement, meme, etc).
+CLASSIFY_PROMPT = """You are a STRICT message classifier for a fake news detection app. Determine if the following message is a VERIFIABLE NEWS CLAIM that could be misinformation.
 
 MESSAGE: "{message}"
 
-RULES:
-1. NEWS_CLAIM = A factual assertion about a real-world event that can be verified as true or false (politics, health, disaster, sports result, government policy, etc.)
-2. NOT_NEWS = Greetings, casual chat, jokes, job postings, advertisements, hashtag spam, memes, opinions, personal messages, emojis, stickers
-3. Be STRICT — only classify as NEWS_CLAIM if it contains a specific factual assertion about a real-world event
+CLASSIFY AS is_news=true ONLY IF ALL of these are true:
+1. It makes a SPECIFIC factual assertion about a PUBLIC event (politics, health/medical claim, disaster, sports result, government policy, financial scam)
+2. It could be TRUE or FALSE — meaning it's a statement that can be fact-checked
+3. It sounds like it could be MISINFORMATION (forwarded messages, sensational claims, "BREAKING NEWS", unverified health cures, political rumors)
+
+CLASSIFY AS is_news=false FOR:
+- Personal messages, greetings, casual chat ("hi", "ok", "how are you")
+- Group admin messages, reminders, event notices, meeting schedules
+- Job postings, advertisements, promotions, hashtag spam
+- College/university announcements, assignment deadlines, lecture notices
+- Memes, jokes, opinions, personal stories
+- Shopping links, food orders, location shares
+- Birthday wishes, congratulations, festival greetings
+- App notifications ("Checking for new messages", "Missed call")
+
+Be VERY STRICT. When in doubt, classify as is_news=false. Only flag genuinely suspicious claims.
 
 Respond with ONLY this JSON, nothing else:
 {{"is_news": true/false, "confidence": 0.0-1.0, "reason": "one sentence why"}}"""

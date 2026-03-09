@@ -19,18 +19,35 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import org.json.JSONObject
 
 /**
- * OverlayService — Draws a floating popup overlay (like Truecaller)
- * to show fact-check verdicts on top of WhatsApp.
+ * OverlayService — Draws floating popup overlays with fact-check verdicts.
+ *
+ * Supports CONCURRENT verifications:
+ * - Each incoming claim gets its own background thread + overlay
+ * - Multiple overlays stack vertically
+ * - Each overlay streams live pipeline stage progress
+ * - User can dismiss any individual overlay
  */
 class OverlayService : Service() {
 
     private var windowManager: WindowManager? = null
-    private var overlayView: View? = null
     private val handler = Handler(Looper.getMainLooper())
-    private var dismissRunnable: Runnable? = null
+
+    // Track active jobs — each has its own overlay and thread
+    private val activeJobs = ConcurrentHashMap<Int, JobState>()
+    private val jobCounter = AtomicInteger(0)
+
+    data class JobState(
+        val jobId: Int,
+        val claim: String,
+        var overlayView: View? = null,
+        var thread: Thread? = null,
+        var dismissRunnable: Runnable? = null,
+    )
 
     companion object {
         private const val TAG = "OverlayService"
@@ -56,34 +73,41 @@ class OverlayService : Service() {
         val claim = intent?.getStringExtra(EXTRA_CLAIM) ?: return START_NOT_STICKY
         val apiUrl = intent.getStringExtra(EXTRA_API_URL) ?: "http://localhost:8080"
 
-        Log.i(TAG, "Starting overlay for claim: ${claim.take(60)}...")
-        Log.i(TAG, "API URL: $apiUrl")
+        // Create foreground notification (only once)
+        if (activeJobs.isEmpty()) {
+            createForegroundNotification()
+        }
 
-        // Create foreground notification
-        createForegroundNotification()
+        val jobId = jobCounter.incrementAndGet()
+        Log.i(TAG, "Job #$jobId starting: ${claim.take(50)}...")
+
+        val job = JobState(jobId, claim)
+        activeJobs[jobId] = job
 
         // Show "Checking..." overlay immediately
-        showOverlay(claim, "CHECKING", "Analyzing claim with AI...", -1.0)
+        handler.post { showOverlayForJob(job, "CHECKING", "⏳ Analyzing claim with AI...", -1.0) }
 
         // Run verification in background thread
-        Thread {
+        job.thread = Thread {
             try {
-                Log.i(TAG, "Starting SSE verification request...")
-                val result = verifyClaim(claim, apiUrl)
+                val result = verifyClaim(jobId, claim, apiUrl)
                 val verdict = result.optString("verdict", "UNVERIFIED")
                 val explanation = result.optString("explanation", "Could not verify")
                 val score = result.optDouble("veracity_score", 0.0)
-                Log.i(TAG, "Verdict received: $verdict (score=$score)")
+                Log.i(TAG, "Job #$jobId verdict: $verdict (score=$score)")
                 handler.post {
-                    updateOverlay(claim, verdict, explanation, score)
+                    updateOverlayForJob(jobId, verdict, explanation, score)
+                    // Auto-dismiss after 20 seconds
+                    scheduleAutoDismiss(jobId, 20000)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Verification failed", e)
+                Log.e(TAG, "Job #$jobId failed", e)
                 handler.post {
-                    updateOverlay(claim, "ERROR", "Check failed: ${e.message}", -1.0)
+                    updateOverlayForJob(jobId, "ERROR", "Check failed: ${e.message}", -1.0)
+                    scheduleAutoDismiss(jobId, 10000)
                 }
             }
-        }.start()
+        }.also { it.start() }
 
         return START_NOT_STICKY
     }
@@ -104,7 +128,7 @@ class OverlayService : Service() {
 
             val notification = android.app.Notification.Builder(this, channelId)
                 .setContentTitle("Credence Shield Active")
-                .setContentText("Verifying news claim...")
+                .setContentText("Monitoring for misinformation...")
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setOngoing(true)
                 .build()
@@ -112,11 +136,21 @@ class OverlayService : Service() {
         }
     }
 
-    private fun showOverlay(claim: String, verdict: String, explanation: String, score: Double) {
-        if (overlayView != null) removeOverlay()
+    /**
+     * Calculate Y offset for stacking overlays vertically.
+     */
+    private fun getYOffset(jobId: Int): Int {
+        val index = activeJobs.keys.sorted().indexOf(jobId)
+        return 80 + (index * 460) // Stack overlays with 460px gap
+    }
 
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_popup, null)
+    private fun showOverlayForJob(job: JobState, verdict: String, explanation: String, score: Double) {
+        if (windowManager == null) {
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        }
+
+        val view = LayoutInflater.from(this).inflate(R.layout.overlay_popup, null)
+        job.overlayView = view
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -131,31 +165,20 @@ class OverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = 100
+            y = getYOffset(job.jobId)
         }
 
-        populateOverlay(claim, verdict, explanation, score)
-        windowManager?.addView(overlayView, params)
+        populateOverlay(view, job.claim, verdict, explanation, score)
+        windowManager?.addView(view, params)
     }
 
-    private fun updateOverlay(claim: String, verdict: String, explanation: String, score: Double) {
-        if (overlayView == null) {
-            showOverlay(claim, verdict, explanation, score)
-            return
-        }
-        populateOverlay(claim, verdict, explanation, score)
-
-        // Auto-dismiss after 15 seconds ONLY for final verdicts (not "CHECKING")
-        if (verdict != "CHECKING") {
-            dismissRunnable?.let { handler.removeCallbacks(it) }
-            dismissRunnable = Runnable { removeOverlay(); stopSelf() }
-            handler.postDelayed(dismissRunnable!!, 15000)
-        }
+    private fun updateOverlayForJob(jobId: Int, verdict: String, explanation: String, score: Double) {
+        val job = activeJobs[jobId] ?: return
+        val view = job.overlayView ?: return
+        populateOverlay(view, job.claim, verdict, explanation, score)
     }
 
-    private fun populateOverlay(claim: String, verdict: String, explanation: String, score: Double) {
-        val view = overlayView ?: return
-
+    private fun populateOverlay(view: View, claim: String, verdict: String, explanation: String, score: Double) {
         val tvVerdict = view.findViewById<TextView>(R.id.tv_verdict)
         val tvClaim = view.findViewById<TextView>(R.id.tv_claim)
         val tvExplanation = view.findViewById<TextView>(R.id.tv_explanation)
@@ -195,47 +218,67 @@ class OverlayService : Service() {
             }
         }
 
+        // Find the jobId for this view so we can dismiss it
+        val jobId = activeJobs.entries.find { it.value.overlayView == view }?.key
         ivClose.setOnClickListener {
-            removeOverlay()
+            if (jobId != null) dismissJob(jobId)
+        }
+    }
+
+    private fun scheduleAutoDismiss(jobId: Int, delayMs: Long) {
+        val job = activeJobs[jobId] ?: return
+        job.dismissRunnable?.let { handler.removeCallbacks(it) }
+        job.dismissRunnable = Runnable { dismissJob(jobId) }
+        handler.postDelayed(job.dismissRunnable!!, delayMs)
+    }
+
+    private fun dismissJob(jobId: Int) {
+        val job = activeJobs.remove(jobId) ?: return
+        Log.i(TAG, "Dismissing job #$jobId")
+
+        // Remove overlay
+        job.overlayView?.let {
+            try { windowManager?.removeView(it) } catch (_: Exception) {}
+        }
+        job.overlayView = null
+
+        // Cancel dismiss timer
+        job.dismissRunnable?.let { handler.removeCallbacks(it) }
+
+        // Interrupt thread if still running
+        job.thread?.interrupt()
+
+        // Stop service if no more active jobs
+        if (activeJobs.isEmpty()) {
             stopSelf()
         }
     }
 
-    private fun removeOverlay() {
-        overlayView?.let {
-            try { windowManager?.removeView(it) } catch (_: Exception) {}
-        }
-        overlayView = null
-    }
-
     /**
-     * Calls the /verify endpoint with SSE (Server-Sent Events) and
-     * extracts the final verdict. Reads the entire byte stream line-by-line.
+     * Calls the /verify endpoint with SSE and extracts the verdict.
+     * Streams live stage updates to the overlay.
      */
-    private fun verifyClaim(claim: String, apiUrl: String): JSONObject {
+    private fun verifyClaim(jobId: Int, claim: String, apiUrl: String): JSONObject {
         val url = URL("$apiUrl/verify")
-        Log.d(TAG, "Connecting to: $url")
+        Log.d(TAG, "Job #$jobId connecting to: $url")
 
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "POST"
         conn.setRequestProperty("Content-Type", "application/json")
         conn.setRequestProperty("Accept", "text/event-stream")
         conn.setRequestProperty("Cache-Control", "no-cache")
+        conn.setRequestProperty("Connection", "keep-alive")
         conn.doOutput = true
-        conn.connectTimeout = 15000       // 15s to connect
-        conn.readTimeout = 300000         // 5 minutes for full pipeline
+        conn.connectTimeout = 15000
+        conn.readTimeout = 300000
 
         val body = JSONObject().apply { put("claim", claim) }
         conn.outputStream.use { it.write(body.toString().toByteArray()) }
 
         val responseCode = conn.responseCode
-        Log.d(TAG, "HTTP response code: $responseCode")
+        Log.d(TAG, "Job #$jobId HTTP: $responseCode")
 
         if (responseCode != 200) {
-            val errorBody = try {
-                conn.errorStream?.bufferedReader()?.readText() ?: "No error body"
-            } catch (_: Exception) { "Could not read error" }
-            Log.e(TAG, "HTTP error $responseCode: $errorBody")
             conn.disconnect()
             return JSONObject().apply {
                 put("verdict", "ERROR")
@@ -251,42 +294,63 @@ class OverlayService : Service() {
             put("veracity_score", 0.0)
         }
 
+        // Stage emoji mapping for streaming display
+        val stageEmoji = mapOf(
+            "claim_extraction" to "🔍 Extracting claims...",
+            "multi_tier_search" to "🌐 Searching fact-check databases...",
+            "scraping" to "📄 Reading evidence pages...",
+            "stance_detection" to "⚖️ Analyzing evidence stance...",
+            "verdict" to "🧮 Computing verdict...",
+            "explanation" to "📝 Generating explanation...",
+        )
+
         try {
             var line: String? = reader.readLine()
-            while (line != null) {
-                Log.d(TAG, "SSE: $line")
-
+            while (line != null && !Thread.currentThread().isInterrupted) {
                 if (line.startsWith("data: ")) {
                     val payload = line.substring(6).trim()
-                    if (payload == "[DONE]") {
-                        Log.i(TAG, "Received [DONE] signal")
-                        break
-                    }
+                    if (payload == "[DONE]") break
 
                     try {
                         val event = JSONObject(payload)
                         val type = event.optString("type", "")
 
-                        // Update overlay with stage progress
-                        if (type == "stage") {
-                            val msg = event.optString("message", "Processing...")
-                            handler.post { updateOverlay(claim, "CHECKING", msg, -1.0) }
+                        // Stream stage updates to the overlay
+                        when (type) {
+                            "stage" -> {
+                                val stage = event.optString("stage", "")
+                                val stageMsg = stageEmoji[stage] ?: event.optString("message", "Processing...")
+                                handler.post { updateOverlayForJob(jobId, "CHECKING", stageMsg, -1.0) }
+                            }
+                            "tier_searching" -> {
+                                val tierName = event.optString("tier_name", "")
+                                handler.post { updateOverlayForJob(jobId, "CHECKING", "🔎 Searching: $tierName", -1.0) }
+                            }
+                            "scraping_evidence" -> {
+                                val idx = event.optInt("index", 0)
+                                val total = event.optInt("total", 0)
+                                handler.post { updateOverlayForJob(jobId, "CHECKING", "📄 Scraping evidence $idx/$total...", -1.0) }
+                            }
+                            "stance_result" -> {
+                                val stance = event.optString("stance", "")
+                                val stanceUrl = event.optString("url", "").let {
+                                    if (it.length > 40) it.take(40) + "..." else it
+                                }
+                                handler.post { updateOverlayForJob(jobId, "CHECKING", "⚖️ $stance — $stanceUrl", -1.0) }
+                            }
+                            "verdict" -> {
+                                verdictJson = event
+                                Log.i(TAG, "Job #$jobId VERDICT: ${event.optString("verdict")}")
+                            }
                         }
-
-                        // Capture final verdict
-                        if (type == "verdict") {
-                            verdictJson = event
-                            Log.i(TAG, "VERDICT CAPTURED: ${event.optString("verdict")}")
-                        }
-                    } catch (e: Exception) {
-                        Log.w(TAG, "JSON parse error for SSE line: ${e.message}")
-                    }
+                    } catch (_: Exception) {}
                 }
-
                 line = reader.readLine()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading SSE stream", e)
+            if (!Thread.currentThread().isInterrupted) {
+                Log.w(TAG, "Job #$jobId SSE stream ended: ${e.message}")
+            }
         } finally {
             try { reader.close() } catch (_: Exception) {}
             conn.disconnect()
@@ -296,8 +360,8 @@ class OverlayService : Service() {
     }
 
     override fun onDestroy() {
-        removeOverlay()
-        dismissRunnable?.let { handler.removeCallbacks(it) }
+        // Clean up all active jobs
+        activeJobs.keys.toList().forEach { dismissJob(it) }
         super.onDestroy()
     }
 }

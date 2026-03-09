@@ -9,15 +9,18 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * CredenceNotificationListener — Listens to Android system notifications,
  * filters for WhatsApp messages, classifies them via LLM /classify API,
  * and triggers the overlay for news claims.
  *
+ * Supports CONCURRENT verifications — multiple news claims can be
+ * fact-checked simultaneously with stacked overlays.
+ *
  * SAFETY: This reads Android OS-level notifications only.
- * It NEVER interacts with WhatsApp internals. WhatsApp has zero
- * visibility into this service — same mechanism as Truecaller.
+ * WhatsApp has zero visibility into this service.
  */
 class CredenceNotificationListener : NotificationListenerService() {
 
@@ -29,15 +32,16 @@ class CredenceNotificationListener : NotificationListenerService() {
         private const val KEY_ENABLED = "shield_enabled"
         private const val KEY_API_URL = "api_url"
         private const val DEFAULT_API_URL = "http://localhost:8080"
-
-        // Debounce: avoid processing same message twice
-        private var lastProcessedHash = 0
-        private var lastProcessedTime = 0L
-        private const val DEBOUNCE_MS = 10000L
-
-        // Track processing to avoid overloading
-        private var isProcessing = false
+        private const val DEBOUNCE_MS = 15000L
+        private const val MAX_CONCURRENT = 3  // Max concurrent verifications
     }
+
+    // Track recently processed messages (hash → timestamp)
+    private val recentMessages = ConcurrentHashMap<Int, Long>()
+
+    // Count active verification threads
+    private var activeCount = 0
+    private val activeCountLock = Any()
 
     private val prefs: SharedPreferences by lazy {
         getSharedPreferences(PREF_NAME, MODE_PRIVATE)
@@ -53,36 +57,44 @@ class CredenceNotificationListener : NotificationListenerService() {
         // Check if shield is enabled
         if (!prefs.getBoolean(KEY_ENABLED, false)) return
 
-        // Don't process if already processing a claim
-        if (isProcessing) return
-
         // Extract notification text
         val extras = sbn.notification?.extras ?: return
         val text = extras.getCharSequence("android.text")?.toString()
             ?: extras.getCharSequence("android.bigText")?.toString()
             ?: return
 
-        // Quick length filter (< 25 chars can't be news)
-        if (text.length < 25) {
+        // Quick length filter (< 30 chars can't be news)
+        if (text.length < 30) {
             Log.d(TAG, "Skipped (too short): ${text.take(30)}")
             return
         }
 
-        // Debounce duplicate messages
+        // Debounce: skip if same message was processed recently
         val hash = text.hashCode()
         val now = System.currentTimeMillis()
-        if (hash == lastProcessedHash && (now - lastProcessedTime) < DEBOUNCE_MS) {
+        val lastTime = recentMessages[hash]
+        if (lastTime != null && (now - lastTime) < DEBOUNCE_MS) {
             return
         }
-        lastProcessedHash = hash
-        lastProcessedTime = now
+        recentMessages[hash] = now
+
+        // Clean up old entries from debounce map
+        recentMessages.entries.removeIf { now - it.value > 60000 }
+
+        // Check concurrent limit
+        synchronized(activeCountLock) {
+            if (activeCount >= MAX_CONCURRENT) {
+                Log.w(TAG, "Max concurrent verifications ($MAX_CONCURRENT) reached, skipping")
+                return
+            }
+            activeCount++
+        }
 
         Log.d(TAG, "WhatsApp notification: ${text.take(60)}...")
 
         val apiUrl = prefs.getString(KEY_API_URL, DEFAULT_API_URL) ?: DEFAULT_API_URL
 
         // Call /classify API in background thread
-        isProcessing = true
         Thread {
             try {
                 val isNews = classifyMessage(text, apiUrl)
@@ -95,7 +107,9 @@ class CredenceNotificationListener : NotificationListenerService() {
             } catch (e: Exception) {
                 Log.e(TAG, "Classification failed", e)
             } finally {
-                isProcessing = false
+                synchronized(activeCountLock) {
+                    activeCount--
+                }
             }
         }.start()
     }
@@ -111,7 +125,7 @@ class CredenceNotificationListener : NotificationListenerService() {
         conn.setRequestProperty("Content-Type", "application/json")
         conn.doOutput = true
         conn.connectTimeout = 10000
-        conn.readTimeout = 60000   // LLM can take up to 60s
+        conn.readTimeout = 60000
 
         val body = JSONObject().apply { put("message", message) }
         conn.outputStream.use { it.write(body.toString().toByteArray()) }
@@ -130,10 +144,10 @@ class CredenceNotificationListener : NotificationListenerService() {
         val confidence = json.optDouble("confidence", 0.0)
         val reason = json.optString("reason", "unknown")
 
-        Log.i(TAG, "Classify result: is_news=$isNews, conf=$confidence, reason=$reason")
+        Log.i(TAG, "Classify: is_news=$isNews, conf=$confidence, reason=$reason")
 
-        // Only trigger if LLM is > 50% confident it's news
-        return isNews && confidence > 0.5
+        // Only trigger if LLM is > 60% confident it's news
+        return isNews && confidence > 0.6
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
